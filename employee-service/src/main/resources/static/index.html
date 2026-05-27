@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payslip Management System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f0f2f5; }
+
+        .navbar {
+            background: #1a237e;
+            color: white;
+            padding: 15px 30px;
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .tabs {
+            display: flex;
+            background: #283593;
+            padding: 0 20px;
+        }
+
+        .tab {
+            padding: 14px 25px;
+            color: white;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-size: 15px;
+        }
+
+        .tab.active { border-bottom: 3px solid #ffeb3b; background: #3949ab; }
+        .tab:hover { background: #3949ab; }
+
+        .container { padding: 30px; max-width: 950px; margin: auto; }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .card h2 { color: #1a237e; margin-bottom: 20px; font-size: 20px; }
+
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
+        .form-group { flex: 1; }
+
+        label { display: block; margin-bottom: 5px; color: #555; font-weight: bold; font-size: 14px; }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        button {
+            background: #1a237e;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+            margin-top: 10px;
+        }
+
+        button:hover { background: #283593; }
+
+        .btn-green { background: #2e7d32; }
+        .btn-green:hover { background: #388e3c; }
+
+        .result {
+            margin-top: 15px;
+            padding: 12px 15px;
+            border-radius: 8px;
+            display: none;
+            font-size: 14px;
+        }
+
+        .success { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+        .error { background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
+
+        .section { display: none; }
+        .section.active { display: block; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th { background: #1a237e; color: white; padding: 12px; text-align: left; }
+        td { padding: 11px 12px; border-bottom: 1px solid #eee; }
+        tr:hover td { background: #f5f5f5; }
+
+        .payslip-box {
+            background: white;
+            border: 2px solid #1a237e;
+            border-radius: 12px;
+            padding: 30px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .payslip-header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #1a237e;
+            margin-bottom: 20px;
+        }
+
+        .payslip-header h2 { color: #1a237e; font-size: 26px; }
+        .payslip-header p { color: #666; margin-top: 5px; }
+
+        .payslip-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        .payslip-info div { font-size: 14px; }
+        .payslip-info span { font-weight: bold; color: #1a237e; }
+
+        .payslip-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 15px;
+        }
+
+        .payslip-row.total {
+            font-weight: bold;
+            font-size: 18px;
+            color: #1a237e;
+            border-top: 2px solid #1a237e;
+            border-bottom: none;
+            margin-top: 10px;
+            padding-top: 15px;
+        }
+
+        .earnings { color: #2e7d32; }
+        .deductions { color: #c62828; }
+
+        .section-title {
+            font-weight: bold;
+            color: #555;
+            margin: 15px 0 5px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .badge-blue { background: #e3f2fd; color: #1565c0; }
+
+        .print-btn {
+            background: #37474f;
+            margin-left: 10px;
+        }
+
+        .print-btn:hover { background: #455a64; }
+
+        @media print {
+            .tabs, .navbar, button, .card:not(.print-area) { display: none; }
+            .payslip-box { display: block !important; border: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="navbar">🏢 Payslip Management System</div>
+
+<div class="tabs">
+    <div class="tab active" onclick="showSection('employees')">👥 Employees</div>
+    <div class="tab" onclick="showSection('attendance')">📅 Attendance</div>
+    <div class="tab" onclick="showSection('payslip')">💰 Generate Payslip</div>
+    <div class="tab" onclick="showSection('allpayslips')">📄 All Payslips</div>
+</div>
+
+<div class="container">
+
+    <!-- EMPLOYEES SECTION -->
+    <div id="employees" class="section active">
+        <div class="card">
+            <h2>➕ Add New Employee</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="empName" placeholder="Enter full name">
+                </div>
+                <div class="form-group">
+                    <label>Department</label>
+                    <input type="text" id="empDept" placeholder="e.g. Engineering">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Designation</label>
+                    <input type="text" id="empDesig" placeholder="e.g. Developer">
+                </div>
+                <div class="form-group">
+                    <label>Basic Salary (₹)</label>
+                    <input type="number" id="empSalary" placeholder="e.g. 50000">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="empEmail" placeholder="email@example.com">
+                </div>
+                <div class="form-group">
+                    <label>HRA %</label>
+                    <input type="number" id="empHra" placeholder="e.g. 40" value="40">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>DA %</label>
+                    <input type="number" id="empDa" placeholder="e.g. 20" value="20">
+                </div>
+                <div class="form-group">
+                    <label>PF %</label>
+                    <input type="number" id="empPf" placeholder="e.g. 12" value="12">
+                </div>
+            </div>
+            <button onclick="addEmployee()">➕ Add Employee</button>
+            <div id="empResult" class="result"></div>
+        </div>
+
+        <div class="card">
+            <h2>👥 All Employees</h2>
+            <button class="btn-green" onclick="loadEmployees()">🔄 Refresh</button>
+            <table id="empTable">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Designation</th>
+                    <th>Basic Salary</th>
+                </tr>
+                </thead>
+                <tbody id="empBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ATTENDANCE SECTION -->
+    <div id="attendance" class="section">
+        <div class="card">
+            <h2>📅 Mark Attendance</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Employee ID</label>
+                    <input type="number" id="attEmpId" placeholder="Enter employee ID">
+                </div>
+                <div class="form-group">
+                    <label>Month</label>
+                    <select id="attMonth">
+                        <option value="1">January</option>
+                        <option value="2">February</option>
+                        <option value="3">March</option>
+                        <option value="4">April</option>
+                        <option value="5" selected>May</option>
+                        <option value="6">June</option>
+                        <option value="7">July</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Year</label>
+                    <input type="number" id="attYear" value="2026">
+                </div>
+                <div class="form-group">
+                    <label>Days Attended</label>
+                    <input type="number" id="attDays" placeholder="e.g. 22" max="26">
+                </div>
+            </div>
+            <button onclick="addAttendance()">✅ Save Attendance</button>
+            <div id="attResult" class="result"></div>
+        </div>
+
+        <div class="card">
+            <h2>📋 All Attendance Records</h2>
+            <button class="btn-green" onclick="loadAttendance()">🔄 Refresh</button>
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Employee ID</th>
+                    <th>Month</th>
+                    <th>Year</th>
+                    <th>Days Attended</th>
+                </tr>
+                </thead>
+                <tbody id="attBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- GENERATE PAYSLIP SECTION -->
+    <div id="payslip" class="section">
+        <div class="card">
+            <h2>💰 Generate Payslip</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Employee ID</label>
+                    <input type="number" id="payEmpId" placeholder="Enter employee ID">
+                </div>
+                <div class="form-group">
+                    <label>Month</label>
+                    <select id="payMonth">
+                        <option value="1">January</option>
+                        <option value="2">February</option>
+                        <option value="3">March</option>
+                        <option value="4">April</option>
+                        <option value="5" selected>May</option>
+                        <option value="6">June</option>
+                        <option value="7">July</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Year</label>
+                    <input type="number" id="payYear" value="2026">
+                </div>
+            </div>
+            <button onclick="generatePayslip()">🖨️ Generate Payslip</button>
+            <div id="payResult" class="result"></div>
+        </div>
+
+        <div class="payslip-box" id="payslipBox">
+            <div class="payslip-header">
+                <h2>🏢 PAYSLIP</h2>
+                <p id="payslipPeriod"></p>
+            </div>
+
+            <div class="payslip-info">
+                <div>Employee Name: <span id="psName"></span></div>
+                <div>Employee ID: <span id="psId"></span></div>
+                <div>Department: <span id="psDept"></span></div>
+                <div>Designation: <span id="psDesig"></span></div>
+                <div>Days Attended: <span id="psDays"></span></div>
+                <div>Total Working Days: <span id="psTotal"></span></div>
+            </div>
+
+            <div class="section-title">💚 Earnings</div>
+            <div class="payslip-row">
+                <span>Basic Salary</span>
+                <span class="earnings" id="psBasic"></span>
+            </div>
+            <div class="payslip-row">
+                <span>Earned Salary</span>
+                <span class="earnings" id="psEarned"></span>
+            </div>
+
+            <div class="section-title">❤️ Deductions</div>
+            <div class="payslip-row">
+                <span>Deductions (Absent Days)</span>
+                <span class="deductions" id="psDeductions"></span>
+            </div>
+
+            <div class="payslip-row total">
+                <span>NET SALARY</span>
+                <span id="psNet"></span>
+            </div>
+
+            <div style="text-align:center; margin-top:20px;">
+                <button class="print-btn" onclick="window.print()">🖨️ Print Payslip</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ALL PAYSLIPS SECTION -->
+    <div id="allpayslips" class="section">
+        <div class="card">
+            <h2>📄 All Generated Payslips</h2>
+            <button class="btn-green" onclick="loadAllPayslips()">🔄 Refresh</button>
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Employee</th>
+                    <th>Department</th>
+                    <th>Month/Year</th>
+                    <th>Days</th>
+                    <th>Net Salary</th>
+                </tr>
+                </thead>
+                <tbody id="allPayBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const EMPLOYEE_URL = 'http://localhost:8081/api/employees';
+    const ATTENDANCE_URL = 'http://localhost:8082/api/attendance';
+    const PAYSLIP_URL = 'http://localhost:8083/api/payslip';
+
+    const months = ['','January','February','March','April','May','June',
+                    'July','August','September','October','November','December'];
+
+    function showSection(name) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(name).classList.add('active');
+        event.target.classList.add('active');
+
+        if (name === 'employees') loadEmployees();
+        if (name === 'attendance') loadAttendance();
+        if (name === 'allpayslips') loadAllPayslips();
+    }
+
+    function showResult(id, msg, isError) {
+        const el = document.getElementById(id);
+        el.style.display = 'block';
+        el.className = 'result ' + (isError ? 'error' : 'success');
+        el.innerText = msg;
+    }
+
+    // EMPLOYEE FUNCTIONS
+    async function addEmployee() {
+        const body = {
+            name: document.getElementById('empName').value,
+            department: document.getElementById('empDept').value,
+            designation: document.getElementById('empDesig').value,
+            basicSalary: parseFloat(document.getElementById('empSalary').value),
+            email: document.getElementById('empEmail').value,
+            hraPercent: parseFloat(document.getElementById('empHra').value),
+            daPercent: parseFloat(document.getElementById('empDa').value),
+            pfPercent: parseFloat(document.getElementById('empPf').value)
+        };
+        try {
+            const res = await fetch(EMPLOYEE_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            showResult('empResult', '✅ Employee added! ID: ' + data.id, false);
+            loadEmployees();
+        } catch (e) {
+            showResult('empResult', '❌ Error: Make sure Employee Service is running on port 8081', true);
+        }
+    }
+
+    async function loadEmployees() {
+        try {
+            const res = await fetch(EMPLOYEE_URL);
+            const data = await res.json();
+            const tbody = document.getElementById('empBody');
+            tbody.innerHTML = '';
+            data.forEach(e => {
+                tbody.innerHTML += `<tr>
+                    <td>${e.id}</td>
+                    <td>${e.name}</td>
+                    <td>${e.department}</td>
+                    <td>${e.designation}</td>
+                    <td>₹${e.basicSalary.toLocaleString()}</td>
+                </tr>`;
+            });
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    // ATTENDANCE FUNCTIONS
+    async function addAttendance() {
+        const body = {
+            employeeId: parseInt(document.getElementById('attEmpId').value),
+            month: parseInt(document.getElementById('attMonth').value),
+            year: parseInt(document.getElementById('attYear').value),
+            daysAttended: parseInt(document.getElementById('attDays').value)
+        };
+        try {
+            const res = await fetch(ATTENDANCE_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            showResult('attResult', '✅ Attendance saved for Employee ID: ' + data.employeeId, false);
+            loadAttendance();
+        } catch (e) {
+            showResult('attResult', '❌ Error: Make sure Attendance Service is running on port 8082', true);
+        }
+    }
+
+    async function loadAttendance() {
+        try {
+            const res = await fetch(ATTENDANCE_URL);
+            const data = await res.json();
+            const tbody = document.getElementById('attBody');
+            tbody.innerHTML = '';
+            data.forEach(a => {
+                tbody.innerHTML += `<tr>
+                    <td>${a.id}</td>
+                    <td>${a.employeeId}</td>
+                    <td>${months[a.month]}</td>
+                    <td>${a.year}</td>
+                    <td>${a.daysAttended}</td>
+                </tr>`;
+            });
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    // PAYSLIP FUNCTIONS
+    async function generatePayslip() {
+        const empId = document.getElementById('payEmpId').value;
+        const month = document.getElementById('payMonth').value;
+        const year = document.getElementById('payYear').value;
+
+        try {
+            const res = await fetch(`${PAYSLIP_URL}/generate/${empId}/month/${month}/year/${year}`, {
+                method: 'POST'
+            });
+            const data = await res.json();
+
+            document.getElementById('payslipPeriod').innerText =
+                months[data.month] + ' ' + data.year;
+            document.getElementById('psName').innerText = data.employeeName;
+            document.getElementById('psId').innerText = data.employeeId;
+            document.getElementById('psDept').innerText = data.department;
+            document.getElementById('psDesig').innerText = data.designation;
+            document.getElementById('psDays').innerText = data.daysAttended;
+            document.getElementById('psTotal').innerText = data.totalWorkingDays;
+            document.getElementById('psBasic').innerText = '₹' + data.basicSalary.toLocaleString();
+            document.getElementById('psEarned').innerText = '₹' + data.earnedSalary.toFixed(2);
+            document.getElementById('psDeductions').innerText = '- ₹' + data.deductions.toFixed(2);
+            document.getElementById('psNet').innerText = '₹' + data.netSalary.toFixed(2);
+
+            document.getElementById('payslipBox').style.display = 'block';
+            showResult('payResult', '✅ Payslip generated successfully!', false);
+        } catch (e) {
+            showResult('payResult', '❌ Error: Check all 3 services are running!', true);
+        }
+    }
+
+    async function loadAllPayslips() {
+        try {
+            const res = await fetch(PAYSLIP_URL);
+            const data = await res.json();
+            const tbody = document.getElementById('allPayBody');
+            tbody.innerHTML = '';
+            data.forEach(p => {
+                tbody.innerHTML += `<tr>
+                    <td>${p.id}</td>
+                    <td>${p.employeeName}</td>
+                    <td>${p.department}</td>
+                    <td>${months[p.month]} ${p.year}</td>
+                    <td>${p.daysAttended}/${p.totalWorkingDays}</td>
+                    <td>₹${p.netSalary.toFixed(2)}</td>
+                </tr>`;
+            });
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    // Load employees on start
+    loadEmployees();
+</script>
+
+</body>
+</html>
